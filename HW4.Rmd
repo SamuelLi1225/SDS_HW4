@@ -1,0 +1,200 @@
+---
+title: "SDS315 HW 3"
+author: "Samuel Li"
+date: "2/12"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(mosaic)
+library(dplyr)
+knitr::opts_chunk$set(fig.height=8, fig.width=12, warning=FALSE, message=FALSE)
+```
+#Problem 1
+
+```{r echo=FALSE}
+library(mosaic)
+set.seed(4)
+simulated_results <- do(100000) * nflip(n=2021, prob = 0.024)
+
+p_value <- mean(simulated_results >= 70)
+
+simulated_results <- as.numeric(simulated_results[[1]])
+hist(simulated_results, breaks = 50, main = "Monte Carlo Simulation of Flagged Trades", xlab = "Flagged Trades")
+abline(v = 70, col = "red", lwd = 1)
+```
+1. Null Hypothesis: The 70 flagged trades out of 2021 from the Iron Bank employees were due to random variation. 
+2. Test Statistic: The number of flagged trades in the sample of 2021 trades. 
+3: Plot shown 
+4: P-value is 0.00181
+5. The P-value is 0.00187  which is less than 0.05, so we reject the null hyptothesis. There was likely a suspicious trade.
+
+
+
+#Problem 2
+```{r echo=FALSE}
+set.seed(4)
+health_simulated <- do(100000) * nflip(n=50, prob = 0.03)
+
+health_p_value <- mean(health_simulated >= 8)
+print(health_p_value)
+health_simulated <- as.numeric(health_simulated[[1]])
+hist(health_simulated, breaks = 12, main = "Monte Carlo simulation of Health Code Violations",xlab = "Health Code Violations")
+abline(v=8, col = "red", lwd = 5)
+```
+1. Null Hypothesis: The 8 health code violations out of the 50 health inspections of Gourment Bites were due to random variation.
+2. Test Statistic: The number of health code violtions in the sample of the 50 health inspections
+3: Plot shown 
+4: P-value is 0.00015
+5. The P-value is 0.00015  which is less than 0.05, so we reject the null hyptothesis. There was likely health code violations.
+
+
+#Problem 3
+```{r echo=FALSE}
+observed_counts <- c(85, 56, 59, 27, 13) 
+expected_proportions <- c(0.30, 0.25, 0.20, 0.15, 0.10)  
+total_jurors <- sum(observed_counts) 
+
+expected_counts <- total_jurors * expected_proportions
+print(expected_counts)
+
+chi_test <- chisq.test(x = observed_counts, p = expected_proportions)
+print(chi_test)
+
+
+
+```
+H0/Null Hypothesis: The distribution of jurors picked by the judge is unbiased. 
+Test Statistic: 12.426
+
+P-Value: 0.01445, so we reject the null hypothesis. It is likely that the judge had bias when choosing the jurors
+
+This suggests possible existence of systematic bias in jury selection. Other explanations could be that certain races were underrepresented because of a lack of registered people or too many exemptions. 
+
+We can investigate further by gathering more data from other judges, so that we can sample across a bigger sample size in order for a more accurate answer. 
+
+
+#Problem 4
+
+
+```{r echo=FALSE}
+library(readr)
+library(dplyr)
+library(stringr)
+
+letter_freq <- read_csv("letter_frequencies.csv")
+
+expected_freq <- setNames(letter_freq$Probability, letter_freq$Letter)
+
+brown_sentences <- readLines("brown_sentences.txt")
+
+chi_squared_values <- c()
+
+for (sentence in brown_sentences) {
+
+  clean_sentence <- gsub("[^A-Za-z]", "", sentence) 
+  clean_sentence <- toupper(clean_sentence) 
+  total_letters <- nchar(clean_sentence)
+  
+  
+  if (total_letters == 0) {
+    next
+  }
+  
+  letters <- unlist(strsplit(clean_sentence, ""))
+  letter_counts <- table(letters)  # Creates a table of letter frequencies
+  
+  observed_counts <- rep(0, length(expected_freq))
+  names(observed_counts) <- names(expected_freq)
+  
+  observed_counts[names(letter_counts)] <- as.numeric(letter_counts)
+  
+  expected_counts <- expected_freq * total_letters
+  
+  chi_squared <- sum((observed_counts - expected_counts)^2 / expected_counts, na.rm = TRUE)
+  
+  chi_squared_values <- c(chi_squared_values, chi_squared)
+}
+
+mean_chi <- mean(chi_squared_values, na.rm = TRUE)
+std_dev_chi <- sd(chi_squared_values, na.rm = TRUE)
+min_chi <- min(chi_squared_values, na.rm = TRUE)
+max_chi <- max(chi_squared_values, na.rm = TRUE)
+cat("Mean:", mean_chi, "\n")
+cat("Standard Deviation:", std_dev_chi, "\n")
+cat("Min:", min_chi, "\n")
+cat("Max:", max_chi, "\n")
+
+
+
+test_sentences <- c(
+  "She opened the book and started to read the first chapter, eagerly anticipating what might come next.",
+  "Despite the heavy rain, they decided to go for a long walk in the park, crossing the main avenue by the fountain in the center.",
+  "The museum’s new exhibit features ancient artifacts from various civilizations around the world.",
+  "He carefully examined the document, looking for any clues that might help solve the mystery.",
+  "The students gathered in the auditorium to listen to the guest speaker’s inspiring lecture.",
+  "Feeling vexed after an arduous and zany day at work, she hoped for a peaceful and quiet evening at home, cozying up after a quick dinner with some TV, or maybe a book on her upcoming visit to Auckland.",
+  "The chef demonstrated how to prepare a delicious meal using only locally sourced ingredients, focusing mainly on some excellent dinner recipes from Spain.",
+  "They watched the sunset from the hilltop, marveling at the beautiful array of colors in the sky.",
+  "The committee reviewed the proposal and provided many points of useful feedback to improve the project’s effectiveness.",
+  "Despite the challenges faced during the project, the team worked tirelessly to ensure its successful completion, resulting in a product that exceeded everyone’s expectations."
+)
+
+chi_squared_test_values <- c()
+
+for (sentence in test_sentences) {
+  
+  clean_sentence <- gsub("[^A-Za-z]", "", sentence)
+  clean_sentence <- toupper(clean_sentence)
+  total_letters <- nchar(clean_sentence)
+  
+  if (total_letters == 0) {
+    next
+  }
+  
+  letters <- unlist(strsplit(clean_sentence, ""))
+  letter_counts <- table(letters)
+  
+  observed_counts <- rep(0, length(expected_freq))
+  names(observed_counts) <- names(expected_freq)
+  
+  observed_counts[names(letter_counts)] <- as.numeric(letter_counts)
+  
+  expected_counts <- expected_freq * total_letters
+  
+  chi_squared <- sum((observed_counts - expected_counts)^2 / expected_counts, na.rm = TRUE)
+  
+  chi_squared_test_values <- c(chi_squared_test_values, chi_squared)
+}
+
+p_values <- 1 - pnorm(chi_squared_test_values, mean = mean_chi, sd = std_dev_chi)
+
+p_values_table <- data.frame(
+  Sentence_ID = 1:10,
+  Chi_Squared = round(chi_squared_test_values, 6),
+  P_Value = round(p_values, 6)
+)
+
+print(p_values_table)
+llm_sentence <- which.min(p_values)
+cat("The sentence likely generated by the LLM is", llm_sentence)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
