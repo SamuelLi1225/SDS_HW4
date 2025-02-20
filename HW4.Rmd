@@ -5,6 +5,7 @@ date: "2/12"
 output: pdf_document
 ---
 
+[https://github.com/SamuelLi1225/SDS_HW4](https://github.com/SamuelLi1225/SDS_HW4)
 
 ```{r setup, include=FALSE}
 library(ggplot2)
